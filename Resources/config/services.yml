@@ -1,0 +1,11 @@
+services:
+    sw_database_config.repositories.extension:
+        class: Doctrine\ORM\EntityRepository
+        factory_service: doctrine.orm.entity_manager
+        factory_method: getRepository
+        arguments:
+            - Sw\DatabaseConfigBundle\Entity\Extension
+
+    sw_database_config.services.configuration:
+        class: Sw\DatabaseConfigBundle\Service\ConfigurationService
+        arguments: [ "@kernel", "@sw_database_config.repositories.extension", "@logger" ]

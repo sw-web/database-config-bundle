@@ -1,0 +1,29 @@
+{
+    "name": "sw-web/database-config-bundle",
+    "type": "symfony-bundle",
+    "description": "Allows management of configuration from the database",
+    "keywords": ["sw", "symfony", "database", "config"],
+    "homepage": "https://github.com/sw-web/UnifikDatabaseConfigBundle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Hubert Perron",
+            "email": "hubert.perron@gmail.com"
+        },
+        {
+            "name": "Frédéric Hamelin",
+            "email": "fredhamelin91@gmail.com"
+        },
+        {
+            "name": "Guillaume Petit",
+            "email": "guillaume.petit@sword-group.com"
+        }
+    ],
+    "require": {
+        "symfony/symfony": "~2.1"
+    },
+    "autoload": {
+        "psr-0": { "Sw\\DatabaseConfigBundle": "" }
+    },
+    "target-dir": "Sw/DatabaseConfigBundle"
+}

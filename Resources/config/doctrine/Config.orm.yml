@@ -1,0 +1,36 @@
+Sw\DatabaseConfigBundle\Entity\Config:
+  type: entity
+  table: config_configuration
+  fields:
+      id:
+          type: integer
+          id: true
+          generator:
+              strategy: AUTO
+      name:
+          type: string
+          length: 255
+      value:
+          type: string
+          length: 255
+  lifecycleCallbacks: {  }
+  repositoryClass: Sw\DatabaseConfigBundle\Entity\ConfigRepository
+  oneToMany:
+      children:
+          targetEntity: Sw\DatabaseConfigBundle\Entity\Config
+          mappedBy: parent
+  manyToOne:
+      parent:
+        targetEntity: Sw\DatabaseConfigBundle\Entity\Config
+        inversedBy: children
+        joinColumn:
+          name: parent_id
+          referencedColumnName: id
+          onDelete: cascade
+      extension:
+        targetEntity: Sw\DatabaseConfigBundle\Entity\Extension
+        inversedBy: configs
+        joinColumn:
+          name: extension_id
+          referencedColumnName: id
+          onDelete: cascade
