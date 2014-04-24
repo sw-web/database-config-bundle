@@ -3,7 +3,7 @@
     "type": "symfony-bundle",
     "description": "Allows management of configuration from the database",
     "keywords": ["sw", "symfony", "database", "config"],
-    "homepage": "https://github.com/sw-web/UnifikDatabaseConfigBundle",
+    "homepage": "https://github.com/sw-web/SwDatabaseConfigBundle",
     "license": "MIT",
     "authors": [
         {
