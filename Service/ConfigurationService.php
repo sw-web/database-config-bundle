@@ -19,6 +19,7 @@ use Doctrine\ORM\EntityManager;
 use Symfony\Component\Form\FormFactory;
 use Symfony\Component\Form\Form;
 use Sw\DatabaseConfigBundle\Form\ConfiguratorType;
+use Sw\DatabaseConfigBundle\Entity\Extension;
 
 /** ConfigurationService
  *
