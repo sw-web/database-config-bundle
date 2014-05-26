@@ -6,6 +6,13 @@ services:
         arguments:
             - Sw\DatabaseConfigBundle\Entity\Extension
 
+    sw_database_config.repositories.config:
+        class: Doctrine\ORM\EntityRepository
+        factory_service: doctrine.orm.entity_manager
+        factory_method: getRepository
+        arguments:
+            - Sw\DatabaseConfigBundle\Entity\Config
+
     sw_database_config.services.configuration:
         class: Sw\DatabaseConfigBundle\Service\ConfigurationService
-        arguments: [ "@kernel", "@sw_database_config.repositories.extension", "@logger" ]
+        arguments: ["@sw_database_config.repositories.config", "@sw_database_config.repositories.extension", "@doctrine.orm.entity_manager", "@form.factory", "@logger"]

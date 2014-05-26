@@ -13,6 +13,12 @@ use Symfony\Component\Config\Definition\IntegerNode;
 use Symfony\Component\Config\Definition\FloatNode;
 use Monolog\Logger;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\ConfigurationInterface;
+use Sw\DatabaseConfigBundle\Entity\ConfigRepository;
+use Doctrine\ORM\EntityManager;
+use Symfony\Component\Form\FormFactory;
+use Symfony\Component\Form\Form;
+use Sw\DatabaseConfigBundle\Form\ConfiguratorType;
 
 /** ConfigurationService
  *
@@ -28,9 +34,19 @@ class ConfigurationService
     private $extensionRepository;
 
     /**
-     * @var AppKernel
+     * @var ConfigRepository the configuration repository
      */
-    private $kernel;
+    private $configRepository;
+
+    /**
+     * @var EntityManager the doctrine entity manager
+     */
+    private $em;
+
+    /**
+     * @var FormFactory the symfony form factory
+     */
+    private $formFactory;
 
     /**
      * @var Logger the logger
@@ -40,34 +56,43 @@ class ConfigurationService
     /**
      * Constructor
      *
-     * @param \AppKernel          $kernel              the application kernel
+     * @param ConfigRepository    $configRepository    the configuration repository
      * @param ExtensionRepository $extensionRepository the repository for the extension entity
+     * @param EntityManager       $entityManager       the entity manager
+     * @param FormFactory         $formFactory         the form factory
      * @param Logger              $logger              the logger
      *
      * @return void
      */
-    public function __construct(\AppKernel $kernel, ExtensionRepository $extensionRepository, Logger $logger)
-    {
-        $this->kernel = $kernel;
+    public function __construct(
+        ConfigRepository    $configRepository,
+        ExtensionRepository $extensionRepository,
+        EntityManager       $entityManager,
+        FormFactory         $formFactory,
+        Logger              $logger
+    ) {
         $this->extensionRepository = $extensionRepository;
+        $this->configRepository = $configRepository;
+        $this->em = $entityManager;
+        $this->formFactory = $formFactory;
         $this->logger = $logger;
     }
 
      /**
      * Get configuration value either from database or bundle config
      *
-     * @param string $configurationClass the configuration class
-     * @param string $namespace          the namespace linked to the extension
-     * @param string $key                the configuration key
+     * @param ConfigurationInterface $configuration the configuration
+     * @param string                 $namespace     the namespace linked to the extension
+     * @param string                 $key           the configuration key
      *
      * @throws \InvalidArgumentException when the configuration key is not found
      * @return mixed string|boolean the configuration value or false if it doesn't exists
      */
-    public function getConfigurationValue($configurationClass, $namespace, $key)
+    public function getConfigurationValue($configuration, $namespace, $key)
     {
         $value = '';
         $path = explode('.', $key);
-        $tree = $this->getContainerConfigurationTree($configurationClass);
+        $tree = $configuration->getConfigTreeBuilder()->buildTree();
 
         $treeName = $tree->getName();
         $node = $this->getConfigurationFromTree($tree, $path);
@@ -145,25 +170,50 @@ class ConfigurationService
     }
 
     /**
-     * Return the configuration tree of a bundle or false if not defined
+     * Generates the configuration form and bind it to a new or already existing extension.
      *
-     * @param string $configurationClass the configuration class
+     * @param ConfigurationInterface $configuration the configuration definition interface
+     * @param string                 $namespace     the extension namespace
      *
-     * @return mixed boolean|array
+     * @return Form
      */
-    public function getContainerConfigurationTree($configurationClass)
+    public function getConfigurationForm(ConfigurationInterface $configuration, $namespace = '')
     {
-        if (class_exists($configurationClass)) {
-            $r = new \ReflectionClass($configurationClass);
+        $tree = $configuration->getConfigTreeBuilder()->buildTree();
+        $extension = $this->extensionRepository->findOneBy(
+            array(
+                'name'      => $tree->getName(),
+                'namespace' => $namespace,
+            )
+        );
 
-            if (!method_exists($configurationClass, '__construct')) {
-                $configuration = new $configurationClass();
-
-                return $configuration->getConfigTreeBuilder()->buildTree();
-            }
+        if (false == $extension) {
+            $extension = new Extension();
+            $extension->setName($tree->getName());
+            $extension->setNamespace($namespace);
         }
 
-        return null;
+        return $this->formFactory->create(new ConfiguratorType(), $extension, array('tree' => $tree));
+    }
+
+    /**
+     * Saves the extension
+     *
+     * @param Form $form the form
+     *
+     * @return void
+     */
+    public function saveConfigurationForm(Form $form)
+    {
+        $extension = $form->getData();
+
+        $this->logger->info('Updating configuration. - ' . (string) $extension);
+
+        // removing the previous config entries from the database
+        $this->configRepository->deleteByExtension($extension->getId());
+
+        $this->em->persist($extension);
+        $this->em->flush($extension);
     }
 
 }
